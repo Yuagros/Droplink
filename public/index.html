@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DROPLINK — File Hosting</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #222222;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #e8e8e8;
+    --muted: #555555;
+    --success: #47ffa0;
+    --error: #ff4747;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  header {
+    width: 100%;
+    max-width: 900px;
+    padding: 48px 32px 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    letter-spacing: 4px;
+    line-height: 1;
+    color: var(--text);
+    position: relative;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .logo::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    right: -12px;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: blink 1.2s step-end infinite;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .tagline {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    padding-bottom: 14px;
+  }
+
+  main {
+    width: 100%;
+    max-width: 900px;
+    padding: 40px 32px;
+    flex: 1;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 40px;
+    position: relative;
+    animation: fadeIn 0.8s ease 0.2s both;
+  }
+
+  .divider::before {
+    content: '// UPLOAD';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    background: var(--bg);
+    padding-right: 16px;
+  }
+
+  .drop-zone {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 80px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.8s ease 0.3s both;
+  }
+
+  .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(232,255,71,0.02) 100%);
+    pointer-events: none;
+  }
+
+  .drop-zone:hover, .drop-zone.dragging {
+    border-color: var(--accent);
+    background: rgba(232,255,71,0.03);
+  }
+
+  .drop-zone.dragging .drop-icon {
+    transform: translateY(-6px) scale(1.1);
+    color: var(--accent);
+  }
+
+  .drop-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    display: block;
+    transition: all 0.25s ease;
+    line-height: 1;
+  }
+
+  .drop-text {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .drop-text strong {
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .drop-text strong:hover { text-decoration: underline; }
+
+  .drop-meta {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 12px;
+    letter-spacing: 1px;
+    opacity: 0.6;
+  }
+
+  #file-input { display: none; }
+
+  .file-queue {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    animation: slideIn 0.3s ease both;
+  }
+
+  .file-ext {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    background: var(--border);
+    color: var(--muted);
+    padding: 3px 7px;
+    border-radius: 2px;
+    min-width: 44px;
+    text-align: center;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .file-info { flex: 1; min-width: 0; }
+
+  .file-name {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+  }
+
+  .file-size { font-size: 10px; color: var(--muted); margin-top: 2px; letter-spacing: 1px; }
+
+  .file-remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    font-family: inherit;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .file-remove:hover { color: var(--error); }
+
+  .status-msg {
+    padding: 14px 16px;
+    background: var(--surface);
+    border-left: 3px solid var(--accent2);
+    font-size: 12px;
+    color: var(--accent2);
+    letter-spacing: 1px;
+    margin-top: 16px;
+    display: none;
+    border-radius: 2px;
+    line-height: 1.6;
+  }
+
+  .status-msg.visible { display: block; }
+
+  .upload-btn {
+    margin-top: 24px;
+    width: 100%;
+    padding: 18px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    display: none;
+  }
+
+  .upload-btn.visible { display: block; }
+
+  .upload-btn:hover {
+    background: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(232,255,71,0.2);
+  }
+
+  .upload-btn:active { transform: translateY(0); }
+
+  .upload-btn:disabled {
+    background: var(--muted);
+    color: #000;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Per-file progress */
+  .progress-wrap {
+    margin-top: 24px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .progress-wrap.visible { display: flex; }
+
+  .progress-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 12px 16px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .progress-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70%;
+  }
+
+  .progress-bar {
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .progress-fill.done { background: var(--success); width: 100%; }
+  .progress-fill.errored { background: var(--error); }
+
+  /* Results */
+  .results-section { margin-top: 48px; }
+
+  .results-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .results-divider::before {
+    content: '// LINKS';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    font-size: 11px;
+    color: var(--success);
+    letter-spacing: 2px;
+    background: var(--bg);
+    padding-right: 16px;
+  }
+
+  .result-item {
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--success);
+    border-radius: 2px;
+    margin-bottom: 12px;
+    animation: slideIn 0.3s ease both;
+  }
+
+  .result-item.error { border-left-color: var(--error); }
+
+  .result-filename {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .result-link-row { display: flex; gap: 10px; align-items: center; }
+
+  .result-link {
+    flex: 1;
+    font-size: 13px;
+    color: var(--success);
+    background: rgba(71,255,160,0.05);
+    border: 1px solid rgba(71,255,160,0.15);
+    padding: 10px 14px;
+    border-radius: 2px;
+    word-break: break-all;
+    cursor: text;
+    user-select: all;
+  }
+
+  .result-link.error-text {
+    color: var(--error);
+    background: rgba(255,71,71,0.05);
+    border-color: rgba(255,71,71,0.15);
+  }
+
+  .copy-btn {
+    background: rgba(71,255,160,0.1);
+    border: 1px solid rgba(71,255,160,0.3);
+    color: var(--success);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 10px 16px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .copy-btn:hover { background: rgba(71,255,160,0.2); }
+  .copy-btn.copied { color: #000; background: var(--success); border-color: var(--success); }
+
+  footer {
+    width: 100%;
+    max-width: 900px;
+    padding: 24px 32px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-text { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .footer-note { font-size: 10px; color: var(--muted); opacity: 0.5; }
+
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DROP<span>LINK</span></div>
+  <div class="tagline">Upload. Share. Done.</div>
+</header>
+
+<main>
+  <div class="divider"></div>
+
+  <div class="drop-zone" id="dropZone">
+    <span class="drop-icon">⬡</span>
+    <div class="drop-text">
+      Drag & drop files here or <strong id="browseBtn">browse</strong>
+    </div>
+    <div class="drop-meta">Any file type · Max 5GB per file · Hosted via GoFile.io</div>
+  </div>
+
+  <input type="file" id="file-input" multiple>
+
+  <div class="file-queue" id="fileQueue"></div>
+
+  <div class="status-msg" id="statusMsg"></div>
+
+  <div class="progress-wrap" id="progressWrap"></div>
+
+  <button class="upload-btn" id="uploadBtn">↑ GENERATE LINKS</button>
+
+  <div class="results-section" id="resultsSection" style="display:none;">
+    <div class="results-divider"></div>
+    <div id="resultsContainer"></div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-text">DROPLINK v2.0</div>
+  <div class="footer-note">Files hosted on GoFile.io</div>
+</footer>
+
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('file-input');
+const browseBtn = document.getElementById('browseBtn');
+const fileQueue = document.getElementById('fileQueue');
+const uploadBtn = document.getElementById('uploadBtn');
+const progressWrap = document.getElementById('progressWrap');
+const resultsSection = document.getElementById('resultsSection');
+const resultsContainer = document.getElementById('resultsContainer');
+const statusMsg = document.getElementById('statusMsg');
+
+let files = [];
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+  return (bytes / 1073741824).toFixed(2) + ' GB';
+}
+
+function getExt(name) {
+  const parts = name.split('.');
+  return parts.length > 1 ? parts.pop().toUpperCase().slice(0, 6) : 'FILE';
+}
+
+function showStatus(msg, type = 'warn') {
+  statusMsg.innerHTML = msg;
+  statusMsg.style.borderLeftColor = type === 'error' ? 'var(--error)' : type === 'success' ? 'var(--success)' : 'var(--accent2)';
+  statusMsg.style.color = type === 'error' ? 'var(--error)' : type === 'success' ? 'var(--success)' : 'var(--accent2)';
+  statusMsg.classList.add('visible');
+}
+
+function hideStatus() { statusMsg.classList.remove('visible'); }
+
+function renderQueue() {
+  fileQueue.innerHTML = '';
+  files.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = `
+      <div class="file-ext">${getExt(f.name)}</div>
+      <div class="file-info">
+        <div class="file-name">${f.name}</div>
+        <div class="file-size">${formatBytes(f.size)}</div>
+      </div>
+      <button class="file-remove" data-idx="${i}" title="Remove">✕</button>
+    `;
+    fileQueue.appendChild(item);
+  });
+  uploadBtn.className = 'upload-btn' + (files.length > 0 ? ' visible' : '');
+}
+
+fileQueue.addEventListener('click', (e) => {
+  if (e.target.dataset.idx !== undefined) {
+    files.splice(+e.target.dataset.idx, 1);
+    renderQueue();
+  }
+});
+
+browseBtn.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('click', (e) => { if (e.target !== browseBtn) fileInput.click(); });
+fileInput.addEventListener('change', () => { addFiles(Array.from(fileInput.files)); fileInput.value = ''; });
+
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragging'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragging'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragging');
+  addFiles(Array.from(e.dataTransfer.files));
+});
+
+function addFiles(newFiles) {
+  newFiles.forEach(f => {
+    if (!files.find(x => x.name === f.name && x.size === f.size)) files.push(f);
+  });
+  renderQueue();
+  hideStatus();
+}
+
+// Upload a single file via our local Express proxy
+function uploadFile(file, progressRow) {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const fill = progressRow.querySelector('.progress-fill');
+    const pct = progressRow.querySelector('.progress-pct');
+
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const p = Math.round((e.loaded / e.total) * 90); // show up to 90% while server processes
+        fill.style.width = p + '%';
+        pct.textContent = p + '%';
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (data.success && data.url) {
+          fill.style.width = '100%';
+          fill.classList.add('done');
+          pct.textContent = '100%';
+          resolve({ name: file.name, url: data.url, error: null });
+        } else {
+          fill.classList.add('errored');
+          resolve({ name: file.name, url: null, error: data.error || 'Upload failed' });
+        }
+      } catch {
+        fill.classList.add('errored');
+        resolve({ name: file.name, url: null, error: 'Invalid server response' });
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      fill.classList.add('errored');
+      resolve({ name: file.name, url: null, error: 'Network error — is the server running?' });
+    });
+
+    xhr.addEventListener('timeout', () => {
+      fill.classList.add('errored');
+      resolve({ name: file.name, url: null, error: 'Request timed out' });
+    });
+
+    xhr.timeout = 600000; // 10 min
+    xhr.open('POST', '/api/upload');
+    xhr.send(formData);
+  });
+}
+
+uploadBtn.addEventListener('click', async () => {
+  if (!files.length) return;
+
+  uploadBtn.disabled = true;
+  uploadBtn.innerHTML = '<span class="spinner"></span>UPLOADING...';
+  hideStatus();
+  resultsSection.style.display = 'none';
+  resultsContainer.innerHTML = '';
+  progressWrap.innerHTML = '';
+  progressWrap.classList.add('visible');
+
+  // Build progress rows
+  const progressRows = files.map((f) => {
+    const row = document.createElement('div');
+    row.className = 'progress-row';
+    row.innerHTML = `
+      <div class="progress-meta">
+        <span class="progress-name">${f.name}</span>
+        <span class="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+    `;
+    progressWrap.appendChild(row);
+    return row;
+  });
+
+  // Upload sequentially (GoFile is happier with this)
+  const results = [];
+  for (let i = 0; i < files.length; i++) {
+    const result = await uploadFile(files[i], progressRows[i]);
+    results.push(result);
+  }
+
+  // Show results
+  resultsSection.style.display = 'block';
+  results.forEach((r, i) => {
+    const item = document.createElement('div');
+    item.className = r.error ? 'result-item error' : 'result-item';
+    item.style.animationDelay = (i * 0.08) + 's';
+
+    const linkContent = r.error
+      ? `<div class="result-link error-text">ERROR: ${r.error}</div>`
+      : `<div class="result-link" id="link-${i}">${r.url}</div>
+         <button class="copy-btn" onclick="copyLink('link-${i}', this)">COPY</button>`;
+
+    item.innerHTML = `
+      <div class="result-filename">${r.name}</div>
+      <div class="result-link-row">${linkContent}</div>
+    `;
+    resultsContainer.appendChild(item);
+  });
+
+  const successCount = results.filter(r => !r.error).length;
+  if (successCount > 0) {
+    showStatus(`✓ ${successCount} file${successCount > 1 ? 's' : ''} uploaded successfully.`, 'success');
+  }
+
+  files = [];
+  renderQueue();
+  uploadBtn.disabled = false;
+  uploadBtn.innerHTML = '↑ GENERATE LINKS';
+});
+
+function copyLink(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ COPIED';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
