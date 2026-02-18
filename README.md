@@ -2,7 +2,7 @@
 
 > **Upload. Share. Done.**
 
-A modern, cyberpunk-styled file-sharing web application that generates instant download links via GoFile.io. Drop a file, get a shareable link - it's that simple.
+A modern, cyberpunk-styled file-sharing web application that generates **instant direct download links**. Drop a file, get a direct download link - paste it in your browser and it downloads immediately, no landing pages!
 
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 ![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)
@@ -12,7 +12,8 @@ A modern, cyberpunk-styled file-sharing web application that generates instant d
 - 🎨 **Beautiful UI** - Cyberpunk-inspired dark theme with smooth animations
 - 📦 **Large Files** - Support for files up to 5GB
 - 🚀 **Fast Upload** - Real-time progress tracking
-- 🔗 **Instant Links** - Shareable download links via GoFile.io
+- ⚡ **Direct Downloads** - Links download instantly when pasted in browser (no landing pages!)
+- 🔗 **Instant Links** - Get shareable download links immediately
 - 📱 **Responsive** - Works on desktop and mobile
 - 🎯 **Drag & Drop** - Intuitive file upload interface
 - 🔄 **Multi-file** - Queue and upload multiple files at once
@@ -53,7 +54,8 @@ The application will be available at `http://localhost:3000`
 
 - **Backend**: Node.js, Express.js
 - **Upload Handling**: Multer
-- **File Hosting**: GoFile.io API
+- **File Hosting**: file.io API (direct downloads)
+- **Fallback**: tmpfiles.org
 - **Frontend**: Vanilla JavaScript, HTML5, CSS3
 - **Fonts**: JetBrains Mono, Bebas Neue
 
@@ -107,7 +109,7 @@ This project is licensed under the MIT License.
 
 ## 🙏 Acknowledgments
 
-- File hosting powered by [GoFile.io](https://gofile.io)
+- File hosting powered by [file.io](https://file.io)
 - Fonts from [Google Fonts](https://fonts.google.com)
 
 ## 📧 Contact

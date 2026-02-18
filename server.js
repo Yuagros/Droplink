@@ -20,28 +20,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Health check
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
-// Upload endpoint — proxies file to GoFile server-side (avoids CORS)
+// Upload endpoint — proxies file to file.io for direct download links
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file provided' });
   }
 
   try {
-    // Step 1: Get best available GoFile server
-    const serverRes = await axios.get('https://api.gofile.io/servers', {
-      timeout: 10000,
-      headers: { 'Accept': 'application/json' }
-    });
-
-    const serverData = serverRes.data;
-    if (serverData.status !== 'ok' || !serverData.data?.servers?.length) {
-      throw new Error('Could not get upload server from GoFile');
-    }
-
-    const servers = serverData.data.servers;
-    const server = servers[Math.floor(Math.random() * servers.length)].name;
-
-    // Step 2: Upload to GoFile
+    // Upload to file.io which provides direct download links
     const form = new FormData();
     form.append('file', req.file.buffer, {
       filename: req.file.originalname,
@@ -50,7 +36,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     });
 
     const uploadRes = await axios.post(
-      `https://${server}.gofile.io/contents/uploadfile`,
+      'https://file.io',
       form,
       {
         headers: {
@@ -64,24 +50,25 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 
     const uploadData = uploadRes.data;
 
-    if (uploadData.status !== 'ok') {
-      throw new Error(uploadData.message || 'GoFile upload failed');
+    if (!uploadData.success) {
+      throw new Error(uploadData.message || 'file.io upload failed');
     }
 
-    const downloadPage = uploadData.data?.downloadPage || `https://gofile.io/d/${uploadData.data?.code}`;
+    // file.io returns a direct download link
+    const directDownloadUrl = uploadData.link;
 
     return res.json({
       success: true,
       filename: req.file.originalname,
       size: req.file.size,
-      url: downloadPage,
-      code: uploadData.data?.code
+      url: directDownloadUrl,
+      expires: uploadData.expiry || '14 days'
     });
 
   } catch (err) {
     console.error('Upload error:', err.message);
 
-    // Try fallback: direct upload to a known store server
+    // Try fallback: use tmpfiles.org
     try {
       const form = new FormData();
       form.append('file', req.file.buffer, {
@@ -91,7 +78,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       });
 
       const fallbackRes = await axios.post(
-        'https://store1.gofile.io/contents/uploadfile',
+        'https://tmpfiles.org/api/v1/upload',
         form,
         {
           headers: { ...form.getHeaders() },
@@ -102,13 +89,17 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       );
 
       const d = fallbackRes.data;
-      if (d.status === 'ok') {
+      if (d.status === 'success' && d.data?.url) {
+        // tmpfiles.org gives URLs like https://tmpfiles.org/12345/file.txt
+        // Convert to direct download: https://tmpfiles.org/dl/12345/file.txt
+        const directUrl = d.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+
         return res.json({
           success: true,
           filename: req.file.originalname,
           size: req.file.size,
-          url: d.data?.downloadPage || `https://gofile.io/d/${d.data?.code}`,
-          code: d.data?.code
+          url: directUrl,
+          expires: '1 hour'
         });
       }
     } catch (fallbackErr) {
