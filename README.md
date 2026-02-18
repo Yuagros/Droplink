@@ -1,121 +1,83 @@
-# 🔗 DROPLINK
+# DROPLINK
 
-> **Upload. Share. Done.**
+Dead simple file sharing. Upload a file, get a direct download link. That's it.
 
-A modern, cyberpunk-styled file-sharing web application that generates **instant direct download links**. Drop a file, get a direct download link - paste it in your browser and it downloads immediately, no landing pages!
+## What it does
 
-![License](https://img.shields.io/badge/license-MIT-yellow)
-![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)
+Drop a file into the web interface, and you get back a URL. When someone visits that URL, the file downloads immediately - no landing pages, no ads, no BS.
 
-## ✨ Features
+Built this because I was tired of file sharing services that make you click through a bunch of pages just to download a file.
 
-- 🎨 **Beautiful UI** - Cyberpunk-inspired dark theme with smooth animations
-- 📦 **Large Files** - Support for files up to 5GB
-- 🚀 **Fast Upload** - Real-time progress tracking
-- ⚡ **Direct Downloads** - Links download instantly when pasted in browser (no landing pages!)
-- 🔗 **Instant Links** - Get shareable download links immediately
-- 📱 **Responsive** - Works on desktop and mobile
-- 🎯 **Drag & Drop** - Intuitive file upload interface
-- 🔄 **Multi-file** - Queue and upload multiple files at once
+## Features
 
-## 🚀 Quick Start
+- Drag & drop interface
+- Files up to 5GB
+- Direct download links (no landing pages)
+- Real-time upload progress
+- Clean, dark UI
+- Upload multiple files at once
 
-### Prerequisites
-
-- Node.js (v14 or higher)
-- npm or yarn
-
-### Installation
+## Running it
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/droplink.git
-
-# Navigate to project directory
-cd droplink
-
-# Install dependencies
+git clone https://github.com/Yuagros/Droplink.git
+cd Droplink
 npm install
-
-# Start the server
 npm start
 ```
 
-The application will be available at `http://localhost:3000`
+Open http://localhost:3000 and you're good to go.
 
-## 📖 Usage
+## How it works
 
-1. Open `http://localhost:3000` in your browser
-2. Drag and drop files onto the upload zone (or click to browse)
-3. Click **"↑ GENERATE LINKS"**
-4. Copy the download links and share them!
+The backend (Express + Node.js) takes your file and uploads it to file.io, which gives back a direct download URL. The frontend is just vanilla HTML/CSS/JS - no framework bloat.
 
-## 🛠️ Tech Stack
+Files are stored on file.io for 14 days, then auto-deleted. If file.io is down, it falls back to tmpfiles.org (1 hour expiration).
 
-- **Backend**: Node.js, Express.js
-- **Upload Handling**: Multer
-- **File Hosting**: file.io API (direct downloads)
-- **Fallback**: tmpfiles.org
-- **Frontend**: Vanilla JavaScript, HTML5, CSS3
-- **Fonts**: JetBrains Mono, Bebas Neue
-
-## 📁 Project Structure
+## Project structure
 
 ```
 droplink/
-├── server.js           # Express backend server
-├── package.json        # Dependencies and scripts
-├── public/
-│   └── index.html      # Frontend (HTML + CSS + JS)
-└── README.md
+├── server.js           # Backend API
+├── package.json        # Dependencies
+└── public/
+    └── index.html      # Frontend (everything in one file)
 ```
 
-## 🎨 Design
+## Deploy it
 
-- **Cyberpunk aesthetic** with vibrant yellow accents
-- **Monospace fonts** for a developer-friendly look
-- **Glassmorphism** effects and scanline overlay
-- **Smooth animations** and micro-interactions
+Works on pretty much any Node.js host:
+- Heroku
+- Railway
+- Vercel
+- Cloudflare Pages
+- Your own VPS
 
-## 🔧 Configuration
+Just point it at the repo and it should work.
 
-### Environment Variables
+## Tech
 
-- `PORT` - Server port (default: 3000)
+- Node.js + Express for the backend
+- Multer for file uploads
+- file.io API for hosting (with tmpfiles.org fallback)
+- Vanilla JavaScript on the frontend
 
-Example:
-```bash
-PORT=8080 npm start
-```
+## Contributing
 
-## 📝 API Endpoints
+Found a bug or want to add something? PRs are welcome.
 
-- `GET /api/health` - Health check
-- `POST /api/upload` - File upload (multipart/form-data)
+## Notes
 
-## 🤝 Contributing
+- file.io links expire after one download (by default) or 14 days
+- If you need permanent storage, swap out file.io for your own storage solution
+- Max file size is 5GB (limited by file.io)
 
-Contributions are welcome! Feel free to:
+## Credits
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Made by **Yuagros**
 
-## 📜 License
+Uses file.io for hosting and Google Fonts (JetBrains Mono, Bebas Neue) for typography.
 
-This project is licensed under the MIT License.
+## License
 
-## 🙏 Acknowledgments
-
-- File hosting powered by [file.io](https://file.io)
-- Fonts from [Google Fonts](https://fonts.google.com)
-
-## 📧 Contact
-
-For questions or feedback, please open an issue on GitHub.
-
----
-
-**Made with ⚡ by [Your Name]**
+MIT - do whatever you want with it.
