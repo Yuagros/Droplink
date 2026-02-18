@@ -74,7 +74,7 @@ Found a bug or want to add something? PRs are welcome.
 
 ## Credits
 
-Made by **Yuagros**
+Made by me (**Yuagros**)
 
 Uses file.io for hosting and Google Fonts (JetBrains Mono, Bebas Neue) for typography.
 
@@ -82,4 +82,4 @@ Uses file.io for hosting and Google Fonts (JetBrains Mono, Bebas Neue) for typog
 
 MIT - do whatever you want with it.
 
-**⚠️ Legal Disclaimer:** This software is provided for legitimate file sharing purposes only. The author (Yuagros) is not responsible for any misuse of this software. Do not use this tool to share illegal content, copyrighted material without permission, malware, or anything that violates local laws. Use responsibly and at your own risk.
+**⚠️ Legal Disclaimer:** This software is provided for legitimate file sharing purposes only. I'm not responsible for any misuse of this software. Do not use this tool to share illegal content, copyrighted material without permission, malware, or anything that violates local laws. Use responsibly and at your own risk.
